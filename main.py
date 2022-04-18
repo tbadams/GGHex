@@ -12,7 +12,8 @@ class HexBoard:
         first_row_length = size
         self.rows_no = (size * 2) - 1
         self.max_coord = self.rows_no // 2
-        middle_row_length = first_row_length + self.max_coord
+        self.max_slice_length = first_row_length + self.max_coord
+        middle_row_length = self.max_slice_length
         self.rows = [
             [(i, j) in coords for j in range(i)] for i in itertools.chain(
                 range(first_row_length, middle_row_length + 1),
@@ -22,6 +23,9 @@ class HexBoard:
             row = coord[0]
             col = coord[1]
             self.rows[row][col] = True
+        self.cells = 0
+        for row in self.rows:
+            self.cells += len(row)
 
     # q + r + s = 0
     # def axial_to_index(self, q:int=None, r:int=None, s:int=None):
@@ -37,8 +41,13 @@ class HexBoard:
         return row, q_index
 
     def index_to_axial(self, row, col):
-        r =row - self.max_coord
+        r = row - self.max_coord
         q = col - row
+        s = -q -r
+        return (q,r,s)
+
+    def get_index(self, row, col):
+        return self.rows[row][col]
 
     def get_axial(self, q, r, s):
         coords = self.axial_to_index(q,r,s)
@@ -56,7 +65,6 @@ class HexBoard:
         self.set_axial(q,r,s, not self.get_axial(q, r, s))
 
 
-
     def ci(self, c:int, i:int):
         return self.rows[c][i]
 
@@ -68,7 +76,7 @@ class HexBoard:
         return self.rows[i][actual_index]
 
     def neighbors_axial(self, q, r, s):
-        return [
+        pos_neighbors =  [
             (q, r+1, s-1),
             (q, r-1, s+1),
             (q+1, r, s-1),
@@ -76,9 +84,27 @@ class HexBoard:
             (q+1, r-1, s),
             (q-1, r+1, s)
                 ]
+        return list(map(lambda coord: self.in_bounds(*coord), pos_neighbors))
 
     def index_neighbors_from_axial(self, q, r, s):
         return list(map( lambda coords: self.axial_to_index(*coords), self.neighbors_axial(q,r,s)))
+
+    def is_finished(self): # check al cells have the same value
+        target = self.get_index(0, 0)
+        for row in self.rows:
+            for value in row:
+                if value is not target:
+                    return False
+        return True
+
+
+    def length_of_slice_at_offset(self, offset):
+        if offset > self.max_coord:
+            raise IndexError("")
+        return self.max_slice_length - offset
+
+    def in_bounds(self, q, r, s):
+        return False
 
     def touch(self, q, r, s):
         new_board = copy.deepcopy(self)
@@ -88,8 +114,26 @@ class HexBoard:
             new_board.toggle_axial(*n)
         return new_board
 
+    def touch_index(self, row, index):
+        return self.touch(*self.index_to_axial(row, index))
+
     def bfs(self):
-        queue =
+        queue = [self]
+        opened = []
+        log_interval = self.cells
+        while len(queue) > 0:
+            head = queue.pop()
+            if head not in opened:
+                opened.append(head)
+                if len(opened) % log_interval == 0:
+                    print("opened {} nodes.".format(len(opened)))
+            for row_index in range(len(head.rows)):
+                for col in range(row_index):
+                    next_node = head.touch_index(row_index, col)
+                    if next_node not in opened:
+                        queue.append(next_node)
+
+
 
 
     def __str__(self) -> str:
@@ -112,7 +156,6 @@ def print_value(board, q, r, s):
 def print_touch(board, q, r, s):
     print("after touching {}, board is \n{}".format((q,r,s), board.touch(q,r,s)))
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     board = HexBoard(coords=[(1,2),(4,5), (4,4)])
     print(board)
@@ -122,5 +165,4 @@ if __name__ == '__main__':
     print_value(board, 0, -1, 1)
     print ("neightbors of 0, 0, 0 are {}, AKA {}".format(board.neighbors_axial(0,0,0), board.index_neighbors_from_axial(0,0,0)))
     print_touch(board, 0,0,0)
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    board.bfs()
