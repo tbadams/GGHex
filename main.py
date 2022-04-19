@@ -127,27 +127,38 @@ class HexBoard:
     def touch_index(self, row, index):
         return self.touch(*self.index_to_axial(row, index))
 
+    def hash(self):
+        hash_sum = 0
+        i = 0
+        flat_list = [item for sublist in self.rows for item in sublist]
+        for bool_item in flat_list:
+            hash_sum += (bool_item << i)
+            i += 1
+        return hash_sum
+
+
     def bfs(self):
         queue = [self]
         opened = []
         log_interval = self.cells
         score = (self.cells // 2) * (self.cells // 2)
         while len(queue) > 0:
-            head = queue.pop()
-            if head not in opened:
-                opened.append(head)
+            head = queue.pop(0)
+            if str(head) not in opened:
+                opened.append(str(head))
                 score = min(score, head.score())
-                # print(head)
+                print("opening {}:\n{}".format(head.hash(), head))
                 if head.is_finished():
                     print("we did it")
                     break
                 elif len(opened) % log_interval == 0:
                     print("opened {} nodes, score {}.".format(len(opened), head.score()))
-            for row_index in range(len(head.rows)):
-                for col in range(row_index):
-                    next_node = head.touch_index(row_index, col)
-                    if next_node not in opened:
-                        queue.append(next_node)
+                # touch all new things
+                for i in range(len(head.rows)):
+                    for row_index in range(len(head.rows[i])):
+                        next_node = head.touch_index(i, row_index)
+                        if next_node not in opened:
+                            queue.append(next_node)
 
 
     def filled(self):
@@ -184,7 +195,8 @@ def print_touch(board, q, r, s):
     print("after touching {}, board is \n{}".format((q,r,s), board.touch(q,r,s)))
 
 if __name__ == '__main__':
-    board = HexBoard(ax_coords=[(0,0,0), (1,0,-1), (0,-1,1), (1,-3,2)])
+   # board = HexBoard(ax_coords=[(0,0,0), (1,0,-1), (0,-1,1), (1,-3,2)])
+    board = HexBoard(size=2, ax_coords=[(0,0,0), (1,0,-1), (0,-1,1)])
     print(board)
     print_value(board, 0,0,0)
     print_value(board, 1,0,-1)
