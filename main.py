@@ -64,7 +64,6 @@ class HexBoard:
     def toggle_axial(self, q, r, s):
         self.set_axial(q,r,s, not self.get_axial(q, r, s))
 
-
     def ci(self, c:int, i:int):
         return self.rows[c][i]
 
@@ -76,7 +75,7 @@ class HexBoard:
         return self.rows[i][actual_index]
 
     def neighbors_axial(self, q, r, s):
-        pos_neighbors =  [
+        pos_neighbors = [
             (q, r+1, s-1),
             (q, r-1, s+1),
             (q+1, r, s-1),
@@ -84,10 +83,10 @@ class HexBoard:
             (q+1, r-1, s),
             (q-1, r+1, s)
                 ]
-        return list(map(lambda coord: self.in_bounds(*coord), pos_neighbors))
+        return list(filter(lambda coord: self.in_bounds(*coord), pos_neighbors))
 
     def index_neighbors_from_axial(self, q, r, s):
-        return list(map( lambda coords: self.axial_to_index(*coords), self.neighbors_axial(q,r,s)))
+        return list(map(lambda coords: self.axial_to_index(*coords), self.neighbors_axial(q,r,s)))
 
     def is_finished(self): # check al cells have the same value
         target = self.get_index(0, 0)
@@ -104,7 +103,7 @@ class HexBoard:
         return self.max_slice_length - offset
 
     def in_bounds(self, q, r, s):
-        return False
+        return -self.max_coord <= q <= self.max_coord and -self.max_coord <= r <= self.max_coord and -self.max_coord <= s <= self.max_coord
 
     def touch(self, q, r, s):
         new_board = copy.deepcopy(self)
